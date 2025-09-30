@@ -18,11 +18,11 @@ def connect_mqttServer():
     # Accept the optional 'properties' parameter used by the newer Paho callback API (MQTT v5)
     def on_connect(client, userdata, flags, rc, properties=None):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+            print("Connesso al broker MQTT!")
         else:
-            print("Failed to connect, return code %d\n", rc)
+            print("Connessione fallita, codice di ritorno %d\n", rc)
 
-    # Use the modern callback API (VERSION2) to avoid DeprecationWarning
+    # Usa l'API di callback moderna (VERSION2) per evitare DeprecationWarning
     client = mqtt_client.Client(callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
                                 client_id=clientID)
     # client.username_pw_set(username, password)
@@ -38,16 +38,15 @@ def publish(client , topic, msg):
     # result is an MQTTMessageInfo; prefer using .rc when available
     status = getattr(result, "rc", None)
     if status is None:
-        # fallback for tuple-style results used in older versions
         try:
             status = result[0]
         except Exception:
             status = -1
 
     if status == 0:
-        print(f"Send `{msg}` to topic `{topic}`")
+        print(f"Inviato `{msg}` al topic `{topic}`")
     else:
-        print(f"Failed to send message to topic {topic}")
+        print(f"Invio del messaggio al topic {topic} non riuscito")
 
 
 def run():

@@ -17,9 +17,9 @@ client_id = f'subscribe-{random.randint(0, 100)}'
 def connect_mqtt() -> mqtt_client:
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print("Connected to MQTT Broker!")
+            print("Connesso al broker MQTT!")
         else:
-            print("Failed to connect, return code %d\n", rc)
+            print("Connessione fallita, codice di ritorno %d\n", rc)
 
     client = mqtt_client.Client(client_id=client_id)
     # client.username_pw_set(username, password)
@@ -30,7 +30,7 @@ def connect_mqtt() -> mqtt_client:
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
-        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+        print(f"Ricevuto `{msg.payload.decode()}` dal topic `{msg.topic}`")
 
     client.subscribe(topic)
     client.on_message = on_message
