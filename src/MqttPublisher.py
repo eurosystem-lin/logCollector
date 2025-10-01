@@ -5,8 +5,10 @@ import time
 
 from paho.mqtt import client as mqtt_client
 
+from src.CowrieLog import CowrieLog
 
-brokerServerAddress = 'broker.emqx.io'
+
+brokerServerAddress = '157.180.47.29'
 port = 1883
 topic = "python/mqtt"
 # Generate a Client ID with the publish prefix.
@@ -16,7 +18,7 @@ clientID = f'publish-{random.randint(0, 1000)}'
 
 def connect_mqttServer():
     # Accept the optional 'properties' parameter used by the newer Paho callback API (MQTT v5)
-    def on_connect(client, userdata, flags, rc, properties=None):
+    def on_connect(client:mqtt_client, userdata, flags, rc, properties=None):
         if rc == 0:
             print("Connesso al broker MQTT!")
         else:
@@ -31,8 +33,7 @@ def connect_mqttServer():
     return client
 
 
-def publish(client , topic, msg):
-    time.sleep(1)
+def publish(client:mqtt_client, topic:str, msg:str):
     msg = f"messages: {msg}"
     result = client.publish(topic, msg)
     # result is an MQTTMessageInfo; prefer using .rc when available
@@ -52,7 +53,8 @@ def publish(client , topic, msg):
 def run():
     client = connect_mqttServer()
     client.loop_start()
-    publish(client,topic="eurosystem/Test", msg="Hello World")
+
+    publish(client,topic="eurosystem/Test", msg=CowrieLog("test.json").prepare_log_from_service())
     client.loop_stop()
 
 

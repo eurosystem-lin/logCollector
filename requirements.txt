@@ -1,1 +1,4 @@
 paho-mqtt
+# Added by assistant: required for InfluxDB v3 client and data handling
+influxdb3-python
+pandas

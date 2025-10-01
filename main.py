@@ -10,5 +10,9 @@ if __name__ == "__main__":
     print("ID del processo che esegue il programma principale: {}".format(os.getpid()))
 
     print("Nome del thread principale: {}".format(threading.current_thread().name))
-    instance = CowrieLog.CowrieLog(logAddress="test.json")
-    print(instance.prepareLogFromService())
+    t1 = threading.Thread(target=mtqq_client.run, name="Thread-CowrieLog")
+    t2 = threading.Thread(target=MqttPublisher.run, name="Thread-MqttPublisher")
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()

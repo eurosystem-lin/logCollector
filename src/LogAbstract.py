@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 import logging
-import string
 logger = logging.getLogger(__name__)
 
 class LogAbstract(ABC):
     _latestUsed = None
     _logAddress = None
 
-    def __init__(self, logAddress):
+    def __init__(self, logAddress:str):
         logger.info(f"Inizializzazione di LogAbstract con logAddress: {logAddress}")
         self._logAddress = logAddress
 
@@ -16,6 +15,6 @@ class LogAbstract(ABC):
         raise NotImplementedError("Le sottoclassi devono implementare questo metodo")
 
     @abstractmethod
-    def prepareLogFromService(self) -> str:
+    def prepare_log_from_service(self) -> str:
         """Apri l'indirizzo di log configurato e restituisci il suo contenuto."""
         raise NotImplementedError()

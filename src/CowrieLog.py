@@ -1,6 +1,6 @@
 import logging
 import json
-from .LogAbstract import LogAbstract
+from src.LogAbstract import LogAbstract
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ class CowrieLog(LogAbstract):
     def __init__(self, logAddress):
         super().__init__(logAddress)
 
-    def prepareLogFromService(self) -> list:
+    def prepare_log_from_service(self) -> list:
         """Legge un file JSON in `self._logAddress` e restituisce una lista di oggetti.
         """
         logger.info("Preparazione del log JSON dal servizio Cowrie")

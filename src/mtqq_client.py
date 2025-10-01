@@ -5,7 +5,7 @@ import random
 from paho.mqtt import client as mqtt_client
 
 
-broker = 'broker.emqx.io'
+broker = '157.180.47.29'
 port = 1883
 topic = "eurosystem/Test"
 # Generate a Client ID with the subscribe prefix.
