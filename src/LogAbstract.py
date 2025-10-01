@@ -8,6 +8,7 @@ class LogAbstract(ABC):
 
     def __init__(self, logAddress:str):
         logger.info(f"Inizializzazione di LogAbstract con logAddress: {logAddress}")
+        self._latestUsed = 0
         self._logAddress = logAddress
 
     def log(self, message):

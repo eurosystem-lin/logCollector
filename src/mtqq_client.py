@@ -10,7 +10,7 @@ from paho.mqtt import client as mqtt_client
 load_dotenv()
 
 broker = os.getenv("MQTT_BROKER")
-port_raw = os.getenv("MQTT_PORT")
+port = int(os.getenv("MQTT_PORT"))
 topic = os.getenv("MQTT_TOPIC")
 client_prefix = os.getenv('MQTT_CLIENT_ID_PREFIX')
 

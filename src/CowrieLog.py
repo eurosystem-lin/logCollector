@@ -1,13 +1,17 @@
 import logging
 import json
+import os
 from src.LogAbstract import LogAbstract
 
 logger = logging.getLogger(__name__)
 
 
 class CowrieLog(LogAbstract):
+    _file_size = None
     def __init__(self, logAddress):
+        logger.info("Inizializzazione di CowrieLog con logAddress: %s", str(logAddress))
         super().__init__(logAddress)
+        self._file_size = 0
 
     def prepare_log_from_service(self) -> list:
         """Legge un file JSON in `self._logAddress` e restituisce una lista di oggetti.
@@ -22,28 +26,29 @@ class CowrieLog(LogAbstract):
         try:
             with open(self._logAddress, "r", encoding="utf-8") as f:
                 text = f.read()
-
-            # Prova diretta: caricare tutto come JSON
-            try:
-                data = json.loads(text)
-                if isinstance(data, list):
-                    return data
-                else:
-                    return [data]
-            except json.JSONDecodeError as e:
-                logger.debug("json.loads fallito: %s", e)
-
             # Prova una riga = un JSON
+            logger.debug("Numero di righe letto nel l'ultima volta: %d righe", self._latestUsed)
+            logger.debug("Dimensione del file letto (la volta prima): %s", self._file_size)
+            logger.debug("Dimensione del file letto adesso: %s", os.path.getsize(self._logAddress))
             objs = []
+            if(self._file_size > os.path.getsize(self._logAddress)):
+                logger.info("Il file di log è stato resettato. Rilettura dall'inizio.")
+                self._latestUsed = 1
+            self._file_size = os.path.getsize(self._logAddress)
+            current_lines = 0
+
             for i, line in enumerate(text.splitlines(), start=1):
                 line = line.strip()
                 if not line:
+                    continue
+                current_lines += 1
+                if current_lines < self._latestUsed:
                     continue
                 try:
                     objs.append(json.loads(line))
                 except json.JSONDecodeError:
                     logger.debug("Riga %d non è JSON valido, salto", i)
-
+            self._latestUsed = current_lines + 1
             if objs:
                 return objs
 
