@@ -1,17 +1,32 @@
 # python 3.11
 
 import random
+import os
+from dotenv import load_dotenv
 
 from paho.mqtt import client as mqtt_client
 
+# Load and require MQTT env vars (no defaults)
+load_dotenv()
 
-broker = '157.180.47.29'
-port = 1883
-topic = "eurosystem/Test"
+broker = os.getenv("MQTT_BROKER")
+port_raw = os.getenv("MQTT_PORT")
+topic = os.getenv("MQTT_TOPIC")
+client_prefix = os.getenv('MQTT_CLIENT_ID_PREFIX')
+
+missing = [k for k,v in (("MQTT_BROKER",broker),("MQTT_PORT",port_raw),("MQTT_TOPIC",topic),("MQTT_CLIENT_ID_PREFIX",client_prefix)) if not v]
+if missing:
+    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}. Please set them in .env or environment.")
+
+try:
+    port = int(port_raw)
+except Exception:
+    raise RuntimeError(f"Invalid MQTT_PORT value: {port_raw}. It must be an integer.")
+
 # Generate a Client ID with the subscribe prefix.
-client_id = f'subscribe-{random.randint(0, 100)}'
-# username = 'emqx'
-# password = 'public'
+client_id = f"{client_prefix}-{random.randint(0, 100)}"
+# username = os.getenv('MQTT_USERNAME')
+# password = os.getenv('MQTT_PASSWORD')
 
 
 def connect_mqtt() -> mqtt_client:

@@ -138,3 +138,4 @@ $RECYCLE.BIN/
 *.swo
 
 # Ignore the Untitled script in repo root
+test.json

@@ -2,19 +2,39 @@
 
 import random
 import time
+from xmlrpc import client
+import os
+from dotenv import load_dotenv
 
 from paho.mqtt import client as mqtt_client
 
 from src.CowrieLog import CowrieLog
 
+load_dotenv()
 
-brokerServerAddress = '157.180.47.29'
-port = 1883
-topic = "python/mqtt"
+# Read required MQTT configuration from environment. No defaults allowed.
+brokerServerAddress = os.getenv("MQTT_BROKER")
+port_raw = os.getenv("MQTT_PORT")
+topic = os.getenv("MQTT_PUBLISH_TOPIC")
+client_prefix = os.getenv('MQTT_CLIENT_ID_PREFIX')
+
+missing = [k for k,v in (("MQTT_BROKER",brokerServerAddress),("MQTT_PORT",port_raw),("MQTT_PUBLISH_TOPIC",topic),("MQTT_CLIENT_ID_PREFIX",client_prefix)) if not v]
+if missing:
+    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}. Please set them in .env or environment.")
+
+try:
+    port = int(port_raw)
+except Exception:
+    raise RuntimeError(f"Invalid MQTT_PORT value: {port_raw}. It must be an integer.")
+
 # Generate a Client ID with the publish prefix.
-clientID = f'publish-{random.randint(0, 1000)}'
-# username = 'emqx'
-# password = 'public'
+clientID = f"{client_prefix}-{random.randint(0, 1000)}"
+__client = None
+# username = os.getenv('MQTT_USERNAME')
+# password = os.getenv('MQTT_PASSWORD')
+def __init__():
+    connect_mqttServer()
+
 
 def connect_mqttServer():
     # Accept the optional 'properties' parameter used by the newer Paho callback API (MQTT v5)
@@ -25,17 +45,16 @@ def connect_mqttServer():
             print("Connessione fallita, codice di ritorno %d\n", rc)
 
     # Usa l'API di callback moderna (VERSION2) per evitare DeprecationWarning
-    client = mqtt_client.Client(callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
+    __client = mqtt_client.Client(callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
                                 client_id=clientID)
     # client.username_pw_set(username, password)
-    client.on_connect = on_connect
-    client.connect(brokerServerAddress, port)
-    return client
+    __client.on_connect = on_connect
+    __client.connect(brokerServerAddress, port)
 
 
 def publish(client:mqtt_client, topic:str, msg:str):
     msg = f"messages: {msg}"
-    result = client.publish(topic, msg)
+    result = __client.publish(topic, msg)
     # result is an MQTTMessageInfo; prefer using .rc when available
     status = getattr(result, "rc", None)
     if status is None:
@@ -49,13 +68,16 @@ def publish(client:mqtt_client, topic:str, msg:str):
     else:
         print(f"Invio del messaggio al topic {topic} non riuscito")
 
+def keep_alive():
+    __client.loop()
+
 
 def run():
-    client = connect_mqttServer()
-    client.loop_start()
+    connect_mqttServer()
+    __client.loop_start()
 
-    publish(client,topic="eurosystem/Test", msg=CowrieLog("test.json").prepare_log_from_service())
-    client.loop_stop()
+    publish(__client,topic="eurosystem/Test", msg=CowrieLog("test.json").prepare_log_from_service())
+    __client.loop_stop()
 
 
 if __name__ == '__main__':

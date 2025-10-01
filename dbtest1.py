@@ -1,11 +1,19 @@
 from influxdb_client_3 import InfluxDBClient3, Point,flight_client_options
 import os, time, json
+from dotenv import load_dotenv
 import pandas as pd
 import certifi
 
-token = "YHWOkiPVVfqPS1jGg0yjBCay3BvxQMOQcDQKhcBOVqumkzywonMz27XEzAylnzIa4-0zoTavtwx7PZESDRpFhQ=="
-org = "EuroSystem"
-host = "https://eu-central-1-1.aws.cloud2.influxdata.com"
+load_dotenv()
+
+# Read required Influx configuration from environment. No defaults allowed.
+token = os.getenv("INFLUX_TOKEN")
+org = os.getenv("INFLUX_ORG")
+host = os.getenv("INFLUX_HOST")
+
+missing = [k for k,v in (("INFLUX_TOKEN",token),("INFLUX_ORG",org),("INFLUX_HOST",host)) if not v]
+if missing:
+  raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}. Please set them in .env or environment.")
 
 fh = open(certifi.where(), "r") 
 cert = fh.read() 
