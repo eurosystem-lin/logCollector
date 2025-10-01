@@ -18,14 +18,6 @@ port_raw = os.getenv("MQTT_PORT")
 topic = os.getenv("MQTT_PUBLISH_TOPIC")
 client_prefix = os.getenv('MQTT_CLIENT_ID_PREFIX')
 
-missing = [k for k,v in (("MQTT_BROKER",brokerServerAddress),("MQTT_PORT",port_raw),("MQTT_PUBLISH_TOPIC",topic),("MQTT_CLIENT_ID_PREFIX",client_prefix)) if not v]
-if missing:
-    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}. Please set them in .env or environment.")
-
-try:
-    port = int(port_raw)
-except Exception:
-    raise RuntimeError(f"Invalid MQTT_PORT value: {port_raw}. It must be an integer.")
 
 # Generate a Client ID with the publish prefix.
 clientID = f"{client_prefix}-{random.randint(0, 1000)}"
