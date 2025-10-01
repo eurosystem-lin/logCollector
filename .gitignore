@@ -89,6 +89,7 @@ celerybeat-schedule
 
 # Environments
 .env
+text.json
 .env.local
 .env.*.local
 .venv
@@ -138,5 +139,3 @@ $RECYCLE.BIN/
 *.swo
 
 # Ignore the Untitled script in repo root
-test.json
-test.json
