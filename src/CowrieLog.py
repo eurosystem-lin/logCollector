@@ -27,7 +27,7 @@ class CowrieLog(LogAbstract):
             with open(self._logAddress, "r", encoding="utf-8") as f:
                 text = f.read()
             # Prova una riga = un JSON
-            logger.debug("Numero di righe letto nel l'ultima volta: %d righe", self._latestUsed)
+            logger.debug("Prossima riga da leggere: %d", self._latestUsed)
             logger.debug("Dimensione del file letto (la volta prima): %s", self._file_size)
             logger.debug("Dimensione del file letto adesso: %s", os.path.getsize(self._logAddress))
             objs = []
@@ -51,8 +51,8 @@ class CowrieLog(LogAbstract):
             self._latestUsed = current_lines + 1
             if objs:
                 return objs
-
-            logger.error("Impossibile decodificare il file come JSON: %s", self._logAddress)
+            else:
+                logger.info("Non sono presenti oggetti JSON validi: %s", self._logAddress)
             return []
 
         except FileNotFoundError:
