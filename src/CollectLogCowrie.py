@@ -12,5 +12,5 @@ class CollectLogCowrie(CollectLog):
 
     def publish_log(self, log: list):
         for entry in log:
-            self._publisher.publish("cowrie/log", str(entry))
+            self._publisher.publish("cowrie/log", entry)
         self._publisher.keep_alive()

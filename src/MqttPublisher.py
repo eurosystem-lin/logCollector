@@ -1,5 +1,5 @@
 # python 3.11
-
+import json
 import random
 import time
 from xmlrpc import client
@@ -45,9 +45,8 @@ class MqttPublisher:
         self.__client.connect(brokerServerAddress, port)
 
 
-    def publish(self, topic:str, msg:str):
-        msg = f"messages: {msg}"
-        result = self.__client.publish(topic, msg)
+    def publish(self, topic:str, msg:json):
+        result = self.__client.publish(topic, json.dumps(msg))
         # result is an MQTTMessageInfo; prefer using .rc when available
         status = getattr(result, "rc", None)
         if status is None:
