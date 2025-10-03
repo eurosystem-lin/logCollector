@@ -3,7 +3,7 @@ import logging
 import time
 from threading import Thread
 from src.LogAbstract import LogAbstract
-from src.MqttPublisher import MqttPublisher
+from src.mqtt.MqttPublisher import MqttPublisher
 from src.CowrieLog import CowrieLog
 
 logger = logging.getLogger(__name__)

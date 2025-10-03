@@ -1,5 +1,5 @@
 from src.CollectLog import CollectLog
-from src.MqttPublisher import MqttPublisher
+from src.mqtt.MqttPublisher import MqttPublisher
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,9 @@ class CollectLogCowrie(CollectLog):
         return self._log_abstract.prepare_log_from_service()
 
     def publish_log(self, log: list):
-        """Invia i log raccolti tramite MQTT publisher al server broker su topic cowrie/log."""
+        """Invia i log raccolti tramite MQTT publisher al server broker su topic predefinito."""
+        logger.info("Invio dei log raccolti tramite MQTT publisher")
+        logger.debug(f"Log: {log}")
         for entry in log:
-            self._publisher.publish("cowrie/log", entry)
+            self._publisher.publish(self._log_abstract._topic, entry)
         self._publisher.keep_alive()

@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 class CowrieLog(LogAbstract):
     _file_size = None
-    def __init__(self, logAddress):
-        logger.info("Inizializzazione di CowrieLog con logAddress: %s", str(logAddress))
-        super().__init__(logAddress)
+    def __init__(self, logAddress: str, topic: str):
+        logger.info("Inizializzazione di CowrieLog con logAddress: %s e topic: %s", str(logAddress), topic)
+        super().__init__(logAddress, topic)
         self._file_size = 0
 
     def prepare_log_from_service(self) -> list:
@@ -27,13 +27,13 @@ class CowrieLog(LogAbstract):
             with open(self._log_file_path, "r", encoding="utf-8") as f:
                 text = f.read()
             # Prova una riga = un JSON
-            logger.debug("Prossima riga da leggere: %d", self._latestUsed)
+            logger.debug("Prossima riga da leggere: %d", self._last_used)
             logger.debug("Dimensione del file letto (la volta prima): %s", self._file_size)
             logger.debug("Dimensione del file letto adesso: %s", os.path.getsize(self._log_file_path))
             objs = []
             if(self._file_size > os.path.getsize(self._log_file_path)):
                 logger.info("Il file di log è stato resettato. Rilettura dall'inizio.")
-                self._latestUsed = 1
+                self._last_used = 1
             self._file_size = os.path.getsize(self._log_file_path)
             current_lines = 0
 
@@ -42,13 +42,13 @@ class CowrieLog(LogAbstract):
                 if not line:
                     continue
                 current_lines += 1
-                if current_lines < self._latestUsed:
+                if current_lines < self._last_used:
                     continue
                 try:
                     objs.append(json.loads(line))
                 except json.JSONDecodeError:
                     logger.debug("Riga %d non è JSON valido, salto", i)
-            self._latestUsed = current_lines + 1
+            self._last_used = current_lines + 1
             if objs:
                 return objs
             else:
