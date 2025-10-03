@@ -14,27 +14,27 @@ class CowrieLog(LogAbstract):
         self._file_size = 0
 
     def prepare_log_from_service(self) -> list:
-        """Legge un file JSON in `self._logAddress` e restituisce una lista di oggetti.
+        """Legge un file JSON in `self._logAddress` e restituisce una lista di oggetti JSON.
         """
         logger.info("Preparazione del log JSON dal servizio Cowrie")
-        logger.debug("Logaddress: %s", str(self._logAddress))
+        logger.debug("Logaddress: %s", str(self._log_file_path))
 
-        if not self._logAddress:
+        if not self._log_file_path:
             logger.error("Nessun indirizzo di log fornito a CowrieLog")
             return []
 
         try:
-            with open(self._logAddress, "r", encoding="utf-8") as f:
+            with open(self._log_file_path, "r", encoding="utf-8") as f:
                 text = f.read()
             # Prova una riga = un JSON
             logger.debug("Prossima riga da leggere: %d", self._latestUsed)
             logger.debug("Dimensione del file letto (la volta prima): %s", self._file_size)
-            logger.debug("Dimensione del file letto adesso: %s", os.path.getsize(self._logAddress))
+            logger.debug("Dimensione del file letto adesso: %s", os.path.getsize(self._log_file_path))
             objs = []
-            if(self._file_size > os.path.getsize(self._logAddress)):
+            if(self._file_size > os.path.getsize(self._log_file_path)):
                 logger.info("Il file di log è stato resettato. Rilettura dall'inizio.")
                 self._latestUsed = 1
-            self._file_size = os.path.getsize(self._logAddress)
+            self._file_size = os.path.getsize(self._log_file_path)
             current_lines = 0
 
             for i, line in enumerate(text.splitlines(), start=1):
@@ -52,12 +52,12 @@ class CowrieLog(LogAbstract):
             if objs:
                 return objs
             else:
-                logger.info("Non sono presenti oggetti JSON validi: %s", self._logAddress)
+                logger.info("Non sono presenti oggetti JSON validi: %s", self._log_file_path)
             return []
 
         except FileNotFoundError:
-            logger.exception("File di log non trovato: %s", self._logAddress)
+            logger.exception("File di log non trovato: %s", self._log_file_path)
         except Exception:
-            logger.exception("Errore durante la lettura del file di log: %s", self._logAddress)
+            logger.exception("Errore durante la lettura del file di log: %s", self._log_file_path)
 
         return []
