@@ -17,7 +17,7 @@ def initialize_logging(argv: list[str]) -> None:
     src.logger.config.configure_logging_from_argv(argv)
 
 
-def create_cowrie_log(config_path: str = "text.json", topic: str = "cowrie/logs") -> CowrieLog:
+def create_cowrie_log(config_path: str = os.getenv("COWRIE_CONFIG_PATH"), topic: str = "cowrie/logs") -> CowrieLog:
     """Crea un'istanza di CowrieLog con i percorsi di configurazione e log specificati."""
     return CowrieLog(config_path, topic)
 
