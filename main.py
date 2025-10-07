@@ -5,12 +5,15 @@ import src.mqtt.mtqq_client as mqtt_client
 from src.mqtt.MqttPublisher import MqttPublisher
 from src.CowrieLog import CowrieLog
 from src.CollectLogCowrie import CollectLogCowrie
-from src.logger import configure_logging_from_argv
+import src.logger.config
+
+
+logger = logging.getLogger(__name__)
 
 
 def initialize_logging(argv: list[str]) -> None:
     """Inizializza il sistema di logging utilizzando gli argomenti della riga di comando."""
-    configure_logging_from_argv(argv)
+    src.logger.config.configure_logging_from_argv(argv)
 
 
 def create_cowrie_log(config_path: str = "text.json", topic: str = "cowrie/logs") -> CowrieLog:
@@ -30,8 +33,8 @@ def create_collect_log_cowrie(cowrie_log: CowrieLog, mqtt_publisher: MqttPublish
 
 def print_runtime_context() -> None:
     """Stampa il contesto di runtime, incluso l'ID del processo e il nome del thread principale."""
-    print(f"ID del processo che esegue il programma principale: {os.getpid()}")
-    print(f"Nome del thread principale: {threading.current_thread().name}")
+    logger.info(f"ID del processo che esegue il programma principale: {os.getpid()}")
+    logger.info(f"Nome del thread principale: {threading.current_thread().name}")
 
 
 def start_collect_log_cowrie_worker(collect_log_cowrie: CollectLogCowrie, thread_name: str = "Thread-MqttPublisher") -> None:
