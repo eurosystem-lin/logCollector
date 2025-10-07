@@ -6,6 +6,7 @@ from src.mqtt.MqttPublisher import MqttPublisher
 from src.CowrieLog import CowrieLog
 from src.CollectLogCowrie import CollectLogCowrie
 import src.logger.config
+import logging
 
 
 logger = logging.getLogger(__name__)
