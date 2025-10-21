@@ -21,6 +21,7 @@ class CollectLog(Thread, ABC):
     def collect_log_and_publish(self):
         """Raccoglie i log dal servizio e li pubblica tramite MQTT publisher."""
         log = self.collect_log_from_service()
+        log = self.elaborate_log(log)
         self.publish_log(log)
 
     @abstractmethod
@@ -29,6 +30,11 @@ class CollectLog(Thread, ABC):
     @abstractmethod
     def publish_log(self, log: str):
         raise NotImplementedError()
+    @abstractmethod
+    def elaborate_log(self, log: str) -> str:
+        raise NotImplementedError()
+
+
 
     def run(self):
         """Avvia il thread per raccogliere e pubblicare i log periodicamente."""
