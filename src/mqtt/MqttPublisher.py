@@ -12,7 +12,6 @@ load_dotenv()
 # TODO: da eliminare
 brokerServerAddress = os.getenv("MQTT_BROKER")
 port = int(os.getenv("MQTT_PORT"))
-topic = os.getenv("MQTT_PUBLISH_TOPIC")
 client_prefix = os.getenv('MQTT_CLIENT_ID_PREFIX')
 
 logger = logging.getLogger(__name__)
