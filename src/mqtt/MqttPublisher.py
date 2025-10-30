@@ -41,7 +41,7 @@ class MqttPublisher:
 
         # Usa l'API di callback moderna (VERSION2) per evitare DeprecationWarning
         self.__client = mqtt_client.Client(callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
-                                    client_id=clientID)
+                                    client_id=clientID,clean_session=True)
         # client.username_pw_set(username, password)
         self.__client.on_connect = on_connect
         self.__client.connect(brokerServerAddress, port)

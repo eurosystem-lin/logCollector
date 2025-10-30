@@ -33,8 +33,9 @@ class CollectLog(Thread, ABC):
     @abstractmethod
     def elaborate_log(self, log: str) -> str:
         raise NotImplementedError()
-
-
+    @abstractmethod
+    def pattern_detect(self, log: str) -> bool:
+        raise NotImplementedError()
 
     def run(self):
         """Avvia il thread per raccogliere e pubblicare i log periodicamente."""
