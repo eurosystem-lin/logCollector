@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import json
 from datetime import datetime, timezone
 from src.LogAbstract import LogAbstract
 
@@ -46,7 +47,8 @@ class FtpLog(LogAbstract):
         ipv4_pattern = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 
         def _format_timestamp(dt: datetime) -> str:
-            return dt.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+            # Telegraf si aspetta sempre la frazione dei secondi nel timestamp ISO
+            return dt.replace(tzinfo=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         def _parse_line(raw_line: str) -> tuple[str | None, str]:
             match = ftp_header.match(raw_line)
@@ -93,9 +95,9 @@ class FtpLog(LogAbstract):
             timestamp, remainder = _parse_line(raw_line)
             src_ip = _extract_ipv4(remainder) or _extract_ipv4(raw_line)
             entries.append({
-                "timestamp": timestamp,
                 "eventid": "ftp",
-                "other": remainder,
+                "timestamp": timestamp,
+                "message": remainder,
                 "src_ip": src_ip,
             })
 
