@@ -42,7 +42,7 @@ class FtpLog(LogAbstract):
         self._file_size = os.path.getsize(self._log_file_path)
 
         ftp_header = re.compile(
-            r"^(?P<weekday>\w{3}) (?P<month>\w{3}) (?P<day>\d{1,2}) (?P<time>\d{2}:\d{2}:\d{2})(?: (?P<year>\d{4}))? (?P<rest>.+)$"
+            r"^(?P<weekday>\w{3})\s+(?P<month>\w{3})\s+(?P<day>\d{1,2})\s+(?P<time>\d{2}:\d{2}:\d{2})(?:\s+(?P<year>\d{4}))?\s+(?P<rest>.+)$"
         )
         ipv4_pattern = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 
