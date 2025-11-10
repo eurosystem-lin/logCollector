@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def initialize_logging(argv: list[str]) -> None:
     """Inizializza il sistema di logging utilizzando gli argomenti della riga di comando."""
-    src.logger.config.configure_logging_from_argv(argv)
+    src.logger.config.configure_logging_from_argv(argv, use_color=True)
 
 
 def create_cowrie_log(config_path: str = os.getenv("COWRIE_CONFIG_PATH"), topic: str = "cowrie/logs") -> CowrieLog:
@@ -31,7 +31,12 @@ def create_ftp_log(config_path: str = os.getenv("FTP_CONFIG_PATH"), topic: str =
 
 def create_mqtt_publisher() -> MqttPublisher:
     """Crea un'istanza di MqttPublisher."""
-    return MqttPublisher()
+    try:
+        mqttPub = MqttPublisher()
+    except Exception as e:
+        logger.error("Errore durante la creazione di MqttPublisher: %s", e)
+        return None
+    return mqttPub
 
 
 def create_collect_log_cowrie(cowrie_log: CowrieLog, mqtt_publisher: MqttPublisher) -> CollectLogCowrie:
