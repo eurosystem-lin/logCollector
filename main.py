@@ -91,6 +91,8 @@ def main(argv: list[str] | None = None) -> None:
 
     threads = [
         start_collect_log_ftp_worker(collect_log_ftp),
+        start_collect_log_cowrie_worker(collect_log_cowrie),
+        
     ]
 
     for thread in threads:
