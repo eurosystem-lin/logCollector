@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import io
 import logging
 import os
 import sys
 from collections.abc import Sequence
 from typing import Final, TextIO
 
-import colorama
-
-DEFAULT_LOG_FORMAT: Final[str] = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+DEFAULT_LOG_FORMAT: Final[str] = (
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+)
 _LEVEL_NAME_MAP: Final[dict[str, int]] = {
     "debug": logging.DEBUG,
     "info": logging.INFO,
@@ -19,80 +20,36 @@ _LEVEL_NAME_MAP: Final[dict[str, int]] = {
     "fatal": logging.CRITICAL,
 }
 
-# Mapping of ANSI escape sequences for each log level; tweak values to change colors.
-_LEVEL_COLOR_MAP: Final[dict[int, str]] = {
-    logging.DEBUG: "\033[36m",   # Cyan
-    logging.INFO: "\033[32m",    # Green
-    logging.WARNING: "\033[33m", # Yellow
-    logging.ERROR: "\033[31m",   # Red
-    logging.CRITICAL: "\033[35m",# Magenta
-}
-_ANSI_RESET: Final[str] = "\033[0m"
-_COLORAMA_INITIALIZED: bool = False
-
 
 class _ColorFormatter(logging.Formatter):
-    """Formatter che applica colori ANSI al nome del livello e al messaggio."""
+    """Applicazione di sequenze ANSI in base al livello di log."""
 
-    def __init__(self, fmt: str, color_map: dict[int, str] | None = None) -> None:
-        super().__init__(fmt)
-        self._color_map = color_map or _LEVEL_COLOR_MAP
+    _COLOR_BY_LEVEL: Final[dict[int, str]] = {
+        logging.DEBUG: "\x1b[36m",  # cyan
+        logging.INFO: "\x1b[37m",  # light gray
+        logging.WARNING: "\x1b[33m",  # yellow
+        logging.ERROR: "\x1b[31m",  # red
+        logging.CRITICAL: "\x1b[1;31m",  # bold red
+    }
+    _RESET: Final[str] = "\x1b[0m"
 
-    def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
-        original_levelname = record.levelname
-        original_msg = record.msg
+    def __init__(self, base_format: str) -> None:
+        super().__init__()
+        self._formatter_by_level = {
+            level: logging.Formatter(f"{color}{base_format}{self._RESET}")
+            for level, color in self._COLOR_BY_LEVEL.items()
+        }
+        self._fallback_formatter = logging.Formatter(base_format)
 
-        color = self._color_map.get(record.levelno)
-        if color:
-            record.levelname = f"{color}{original_levelname}{_ANSI_RESET}"
-            if isinstance(record.msg, str):
-                record.msg = f"{color}{record.msg}{_ANSI_RESET}"
-
-        try:
-            return super().format(record)
-        finally:
-            record.levelname = original_levelname
-            record.msg = original_msg
-
-
-def _prepare_stream(stream: TextIO | None) -> TextIO:
-    target = stream or sys.stdout
-    global _COLORAMA_INITIALIZED
-
-    if os.name == "nt" and colorama is not None:
-        if not _COLORAMA_INITIALIZED:
-            if hasattr(colorama, "just_fix_windows_console"):
-                colorama.just_fix_windows_console()
-            colorama.init(convert=True, strip=False, autoreset=False, wrap=False)
-            _COLORAMA_INITIALIZED = True
-        return colorama.AnsiToWin32(target, convert=True).stream
-
-    return target
-
-
-def _stream_supports_color(stream: TextIO) -> bool:
-    if os.getenv("NO_COLOR") is not None:
-        return False
-
-    is_tty = getattr(stream, "isatty", None)
-    if callable(is_tty):
-        try:
-            return bool(is_tty())
-        except Exception:  # pragma: no cover - difesa da stream non standard
-            return False
-
-    return False
+    def format(self, record: logging.LogRecord) -> str:
+        formatter = self._formatter_by_level.get(record.levelno, self._fallback_formatter)
+        return formatter.format(record)
 
 
 def resolve_log_level(level: str | None, default: int = logging.DEBUG) -> int:
-    """Traduce un livello di log testuale nella costante corrispondente.
-
-    Qualsiasi valore non riconosciuto ricade su *default* (DEBUG per impostazione predefinita).
-    """
-
+    """Traduce un livello di log testuale nella costante corrispondente."""
     if level is None:
         return default
-
     return _LEVEL_NAME_MAP.get(level.lower(), default)
 
 
@@ -102,42 +59,40 @@ def configure_logging(
     log_format: str = DEFAULT_LOG_FORMAT,
     force: bool = False,
     use_color: bool | None = None,
-    color_map: dict[int, str] | None = None,
     stream: TextIO | None = None,
 ) -> int:
-    """Configura il logger radice.
-
-    Accetta un livello numerico, un nome di livello testuale oppure *None* (predefinito DEBUG).
-    Restituisce il livello numerico effettivamente applicato.
-    """
-
+    """Configura il logger radice applicando opzionalmente colori ANSI."""
     resolved_level = (
         resolve_log_level(level) if isinstance(level, str) else level or logging.DEBUG
     )
+    handler_stream = stream or sys.stdout
 
-    raw_stream = stream or sys.stdout
-    should_use_color = use_color if use_color is not None else _stream_supports_color(raw_stream)
-
-    handlers = None
-    if should_use_color:
-        target_stream = _prepare_stream(raw_stream)
-        color_handler = logging.StreamHandler(target_stream)
-        color_handler.setFormatter(_ColorFormatter(log_format, color_map))
-        handlers = [color_handler]
-
-    basic_config_kwargs: dict[str, object] = {
-        "level": resolved_level,
-        "force": force,
-    }
-
-    if handlers:
-        basic_config_kwargs["handlers"] = handlers
+    use_color_flag = _should_use_color(handler_stream, use_color)
+    if use_color_flag:
+        _enable_windows_ansi(handler_stream)
+        formatter: logging.Formatter = _ColorFormatter(log_format)
     else:
-        basic_config_kwargs["format"] = log_format
-        if stream is not None:
-            basic_config_kwargs["stream"] = raw_stream
+        formatter = logging.Formatter(log_format)
 
-    logging.basicConfig(**basic_config_kwargs)
+    root_logger = logging.getLogger()
+
+    if force:
+        _reset_handlers(root_logger)
+
+    root_logger.setLevel(resolved_level)
+    if not root_logger.handlers:
+        handler = logging.StreamHandler(handler_stream)
+        handler.setLevel(resolved_level)
+        handler.setFormatter(formatter)
+        root_logger.addHandler(handler)
+    else:
+        root_logger.setLevel(resolved_level)
+        for handler in root_logger.handlers:
+            handler.setLevel(resolved_level)
+            if isinstance(handler, logging.StreamHandler):
+                if stream is not None and hasattr(handler, "setStream"):
+                    handler.setStream(handler_stream)
+                handler.setFormatter(formatter)
     return resolved_level
 
 
@@ -148,25 +103,62 @@ def configure_logging_from_argv(
     log_format: str = DEFAULT_LOG_FORMAT,
     force: bool = False,
     use_color: bool | None = None,
-    color_map: dict[int, str] | None = None,
     stream: TextIO | None = None,
 ) -> int:
-    """Configura il logging in base a una sequenza di argomenti CLI.
-
-    Il secondo argomento posizionale (indice 1) viene interpretato come livello di log desiderato.
-    """
-
+    """Configura il logging in base agli argomenti CLI."""
     raw_level = argv[1] if len(argv) > 1 else None
     resolved_level = resolve_log_level(
-        raw_level if raw_level is not None else None,
+        raw_level,
         default=default_level or logging.DEBUG,
     )
-    configure_logging(
+    return configure_logging(
         resolved_level,
         log_format=log_format,
         force=force,
         use_color=use_color,
-        color_map=color_map,
         stream=stream,
     )
-    return resolved_level
+
+
+def _should_use_color(stream: TextIO, explicit: bool | None) -> bool:
+    if explicit is not None:
+        return explicit
+    isatty = getattr(stream, "isatty", None)
+    if callable(isatty):
+        try:
+            return bool(isatty())
+        except OSError:
+            return False
+    return False
+
+
+def _enable_windows_ansi(stream: TextIO) -> None:
+    if os.name != "nt":
+        return
+    fileno = getattr(stream, "fileno", None)
+    if not callable(fileno):
+        return
+    try:
+        fd = stream.fileno()
+    except (io.UnsupportedOperation, ValueError, OSError):
+        return
+    try:
+        import msvcrt  # type: ignore
+        import ctypes
+    except ImportError:
+        return
+
+    kernel32 = ctypes.windll.kernel32
+    handle = msvcrt.get_osfhandle(fd)
+    mode = ctypes.c_uint()
+    if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+        return
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+    if mode.value & ENABLE_VIRTUAL_TERMINAL_PROCESSING:
+        return
+    kernel32.SetConsoleMode(handle, mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+
+
+def _reset_handlers(logger: logging.Logger) -> None:
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)

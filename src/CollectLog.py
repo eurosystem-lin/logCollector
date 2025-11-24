@@ -22,7 +22,9 @@ class CollectLog(Thread, ABC):
         """Raccoglie i log dal servizio e li pubblica tramite MQTT publisher."""
         log = self.collect_log_from_service()
         log = self.elaborate_log(log)
-        self.publish_log(log)
+        logger.debug(f"Log dopo l'elaborazione: {log}")
+        if self._publisher is not None:
+            self.publish_log(log)
 
     @abstractmethod
     def collect_log_from_service(self) -> str:

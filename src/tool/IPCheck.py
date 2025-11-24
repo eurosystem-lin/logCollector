@@ -41,7 +41,7 @@ def check_ip_isp(ip_address: str) -> str:
 
     return decodedResponse['data']["isp"]
 
-
+@staticmethod
 def is_checked(ip_address: str) -> str:
     """Restituisce l'ISP dell'IP sfruttando una cache in memoria per ridurre le chiamate all'API."""
 
